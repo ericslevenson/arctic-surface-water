@@ -1,1 +1,6 @@
-README
+README File
+
+This repository will eventually hold scripts to accomplish the following tasks: 
+  (1) Creating an object-based water body mask (in development); 
+  (2) Processing images in Earth Engine and exporting near-daily observations of water extent;
+  (3) Time series analysis from the Earth Engine outputs
