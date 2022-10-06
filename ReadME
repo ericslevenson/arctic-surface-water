@@ -5,7 +5,7 @@ Part 1: LakeScan
 Motivation: Where in the Arctic could there be an open-water lake at any point in the study period?
 
 Scripts:
-S2bgrnExport.ipynb
+S2bgrnExport.ipynb OR S2maskedmosaic.ipynb
 S2download.ipynb
 S2imStack.ipynb
 Predictor.ipynb
