@@ -1,6 +1,6 @@
 # Map Arctic lakes
 
-## Part 1: LakeScan | Where in the Arctic could there be an open-water lake at any point in the study period?
+### Part 1: LakeScan  |  Identify lakes while filtering out rivers, shadows, burn scars.
 
 #### Scripts:
 S2bgrnExport.ipynb OR S2maskedmosaic.ipynb
@@ -9,7 +9,7 @@ S2imStack.ipynb
 Predictor.ipynb
 S2vectorize.ipynb (not yet committed)
 
-## Part 2: LakeTrack | Identify precise locations of individual lakes and record their changes through time.
+### Part 2: LakeTrack  |  Identify precise locations of individual lakes and record their changes through time.
 
 #### Scripts:
 LakeTimeSeriesv1.ipynb
