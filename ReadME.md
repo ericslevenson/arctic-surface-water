@@ -1,4 +1,4 @@
-# Map Arctic lakes
+# Arctic Lakes
 
 Use Sentinel-2 to: (a) track variability in individual lakes' surface area, and (b) produce a lake occurrence mask across the Arctic.
 
