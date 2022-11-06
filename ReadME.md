@@ -26,6 +26,8 @@ S2vectorize.ipynb (not yet committed) \
 Based on all available Sentinel-2 images, LakeTrack provides a final **lake occurrence mask** for customizable areas and timeframes as well as a **timeseries of each lake's surface area**. \
 
 ##### LakeTrack Scripts:
+LakeOccurrence.ipynb \
+    *Process images in Earth Engine and export a lake occurrence composite image* \
 LakeTimeSeriesv1.ipynb \
     *Process images in Earth Engine and export near-daily observations of water extent* \
 LakeTimeSeriesv2visualize.ipynb \
