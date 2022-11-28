@@ -19,8 +19,10 @@ S2imStack.ipynb \
     *Combine the R,G,B,NIR Sentinel-2 downloads into 4-band images* \
 Predictor.ipynb \
     *Use the UNET model to predict lake locations* \
-S2vectorize.ipynb (not yet committed) \
-    *Combine multiple UNET predictions into binary lake images, buffer lake extent, and vectorize.* \
+dilate2vectorize.ipynb \
+    *Buffer UNET lake predictions and convert to shapefile* \
+merge_swot2unet.py \
+    *merge buffered SWOT lake shapefile to UNET outputs
   
 ### LakeTrack Description:
 Based on all available Sentinel-2 images, LakeTrack provides a final **lake occurrence mask** for customizable areas and timeframes as well as a **timeseries of each lake's surface area**. \
