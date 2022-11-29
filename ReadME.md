@@ -22,7 +22,7 @@ Predictor.ipynb \
 dilate2vectorize.ipynb \
     *Buffer UNET lake predictions and convert to shapefile* \
 merge_swot2unet.py \
-    *merge buffered SWOT lake shapefile to UNET outputs
+    *merge buffered SWOT lake shapefile to UNET outputs*
   
 ### LakeTrack Description:
 Based on all available Sentinel-2 images, LakeTrack provides a final **lake occurrence mask** for customizable areas and timeframes as well as a **timeseries of each lake's surface area**. \
@@ -30,6 +30,10 @@ Based on all available Sentinel-2 images, LakeTrack provides a final **lake occu
 ##### LakeTrack Scripts:
 LakeOccurrence.ipynb \
     *Process images in Earth Engine and export a lake occurrence composite image* \
+mask2seed.ipynb \
+    *Create new buffered lake shapefile based on the lake occurrence raster* \
+LakeTimeSeriesv3.ipynb \
+    *Process images in Earth Engine and export near-daily observations of water extent per lake* \
 LakeTimeSeriesv1.ipynb \
     *Process images in Earth Engine and export near-daily observations of water extent* \
 LakeTimeSeriesv2visualize.ipynb \
