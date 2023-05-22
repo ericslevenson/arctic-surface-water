@@ -29,9 +29,11 @@ Based on all available Sentinel-2 images, LakeTrack provides a final **lake occu
 
 ##### LakeTrack Scripts:
 LakeOccurrence.ipynb \
-    *Process images in Earth Engine and export a lake occurrence composite image* \
+     *Process images in Earth Engine and export a lake occurrence composite image* \
+LakeOccurrenceBatches.ipynb \
+    *Batch processing of ROIs to process images in Earth Engine and export a lake occurrence composite* \
 mask2seed.ipynb \
-    *Create new buffered lake shapefile based on the lake occurrence raster* \
+      *Create new buffered lake shapefile based on the lake occurrence raster* \
 LakeTimeSeriesv3.ipynb \
     *Process images in Earth Engine and export near-daily observations of water extent per lake* \
 LakeTimeSeriesv1.ipynb \
