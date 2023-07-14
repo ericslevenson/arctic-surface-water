@@ -32,6 +32,8 @@ LakeOccurrence.ipynb \
      *Process images in Earth Engine and export a lake occurrence composite image* \
 LakeOccurrenceBatches.ipynb \
     *Batch processing of ROIs to process images in Earth Engine and export a lake occurrence composite* \
+OccurrenceProcessing.py \
+   *Clean lake occurrence rasters using segmentation techniques, and convert to shapefiles* \
 mask2seed.ipynb \
       *Create new buffered lake shapefile based on the lake occurrence raster* \
 LakeTimeSeriesv3.ipynb \
