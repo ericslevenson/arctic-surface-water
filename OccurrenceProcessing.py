@@ -20,21 +20,28 @@ from skimage.color import label2rgb
 from skimage.filters import sobel
 from skimage.measure import label
 from skimage.segmentation import expand_labels, watershed
+from geopandas import GeoDataFrame
+from pandas import DataFrame
+from rasterio.features import shapes
+from shapely.geometry import shape
 
 
 ## ***INPUTS***
 computer = 'laptop' #laptop or desktop
-mode = 'batch'  ### single or batch for one image or entire folder
-directory = '/Users/ericlevenson/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed/' # Path to lakeOccurrence Folder
-tile_id =  199 # use in single mode
-out_directory = '/Users/ericlevenson/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/processed/' # Path to processed lake Occurrence Folder
+mode = 'single'  ### single or batch for one image or entire folder
+background_threshold, foreground_threshold = 0.25, 0.3 # threshold for segmentation
+directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed/' # Path to lakeOccurrence Folder
+tile_id =  342 # use in single mode
+raster_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/processed/' # Path to processed lake Occurrence Folder
+shapefile_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/expanded/'
+buffered_shapefile_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/segmented/'
 input_descriptor = '_5N_lakeOccurrence_2016-2021.tif'
 output_descriptor = '_5N_lakeOccurrence_2016-2021_processed.tif'
 
 
 ## ***Methods***
 
-def im_process(image):
+def im_process(image, background_threshold, foreground_threshold):
     '''Perform image processing on numpy array input'''
     # Edge detection
     edges = sobel(image)
@@ -42,8 +49,8 @@ def im_process(image):
     # These pixels are used as seeds for watershed.
     markers = np.zeros_like(image)
     foreground, background = 1, 2
-    markers[image < 0.25] = background
-    markers[image > 0.3] = foreground
+    markers[image < background_threshold] = background
+    markers[image > foreground_threshold] = foreground
     # Watershed Segmentation
     ws = watershed(edges, markers)
     # Label Segments
@@ -54,9 +61,28 @@ def im_process(image):
     expanded_mask = expanded.astype(bool)
     # Apply the boolean mask to the 'image' variable
     image[~expanded_mask] = np.nan
-    return image
+    # Binarize segmented and expanded
+    seg1 = np.where(seg1 == 0, 0, 1).astype(np.int32)
+    expanded = np.where(expanded == 0, 0, 1).astype(np.int32)
+    return image, seg1, expanded
 
-def visualize_processing(image):
+def vectorize(segmented, expanded):
+    '''Produces geodataframes for a segmented and expanded segmentation raster'''
+    shape_gen = ((shape(s), v) for s, v in shapes(segmented, transform=dataset.transform))
+    # build a pd.DataFrame of shapes and convert to geodataframe
+    df_seg = DataFrame(shape_gen, columns=['geometry', 'class'])
+    gdf_seg = GeoDataFrame(df_seg["class"], geometry=df_seg.geometry, crs=dataset.crs)
+    # filter out non-lake polygons
+    gdf_seg = gdf_seg[gdf_seg['class'] == 1]
+    del shape_gen
+    shape_gen = ((shape(s), v) for s, v in shapes(expanded, transform=dataset.transform))
+    df_expand = DataFrame(shape_gen, columns=['geometry', 'class'])
+    gdf_expand = GeoDataFrame(df_expand["class"], geometry=df_expand.geometry, crs=dataset.crs)
+    # filter out non-lake polygons
+    gdf_expand = gdf_expand[gdf_expand['class'] == 1]
+    return gdf_seg, gdf_expand
+    
+def visualize_processing(image, background_threshold, foreground_threshold):
     ''''Process image and produce plot for intermediate steps'''
     # Edge detection
     edges = sobel(image)
@@ -64,8 +90,8 @@ def visualize_processing(image):
     # These pixels are used as seeds for watershed.
     markers = np.zeros_like(image)
     foreground, background = 1, 2
-    markers[image < 0.25] = background
-    markers[image > 0.3] = foreground
+    markers[image < background_threshold] = background
+    markers[image > foreground_threshold] = foreground
     # Watershed Segmentation
     ws = watershed(edges, markers)
     # Label Segments
@@ -106,11 +132,17 @@ if __name__ == "__main__":
             meta = dataset.meta
             meta.update(compress='lzw') # reduce file size
             # Segment image
-            image = im_process(image)
+            image, segmented, expanded = im_process(image, background_threshold, foreground_threshold)
             # Write the modified 'image' variable to a new raster file
             export_descriptor = str(str(tile_id) + output_descriptor)
-            with rasterio.open(str(out_directory + export_descriptor), 'w', **meta) as dst:
+            with rasterio.open(str(raster_out_directory + export_descriptor), 'w', **meta) as dst:
                 dst.write(image, 1)
+            # Vectorize
+            gdf_seg, gdf_expand = vectorize(segmented, expanded)
+            # Write the lake shapefile
+            gdf_seg.to_file(shapefile_out_directory + str(tile_id) + '.shp')
+            # Write the buffered lake shapefile
+            gdf_expand.to_file(buffered_shapefile_out_directory + str(tile_id) + '_buffered.shp')
     elif mode == 'batch':
         processed = [i.split('_')[0] for i in os.listdir(out_directory) if output_descriptor in i] # list of processed tiles
         images = [i for i in os.listdir(directory) if input_descriptor in i and i.split('_')[0] not in processed] # get list of images
@@ -125,11 +157,17 @@ if __name__ == "__main__":
                 meta = dataset.meta
                 meta.update(compress='lzw')
                 # Segment image
-                image = im_process(image)
+                image, segmented, expanded = im_process(image)
                 # Write the modified 'image' variable to a new raster file
                 export_descriptor = str(str(i.split('_')[0] + output_descriptor))
                 with rasterio.open(str(out_directory + export_descriptor), 'w', **meta) as dst:
                     dst.write(image, 1)
+            # Vectorize
+            gdf_seg, gdf_expand = vectorize(segmented, expanded)
+            # Write the lake shapefile
+            gdf_seg.to_file(shapefile_out_directory + str(tile_id) + '.shp')
+            # Write the buffered lake shapefile
+            gdf_expand.to_file(buffered_shapefile_out_directory + str(tile_id) + '_buffered.shp')
         print('Well, that was fun!')
     else:
         print('ERROR: Set mode input variable to single or batch')
