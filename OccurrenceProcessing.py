@@ -27,14 +27,14 @@ from shapely.geometry import shape
 
 
 ## ***INPUTS***
-computer = 'laptop' #laptop or desktop
-mode = 'single'  ### single or batch for one image or entire folder
+user = 'ericlevenson' # ericlevenson = laptop; elevens2 = desktop
+mode = 'batch'  ### single or batch for one image or entire folder
 background_threshold, foreground_threshold = 0.25, 0.3 # threshold for segmentation
-directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed/' # Path to lakeOccurrence Folder
+directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed_combined/' # Path to lakeOccurrence Folder
 tile_id =  342 # use in single mode
-raster_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/processed/' # Path to processed lake Occurrence Folder
-shapefile_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/expanded/'
-buffered_shapefile_out_directory = '/Users/elevens2/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/segmented/'
+raster_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/processed/' # Path to processed lake Occurrence Folder
+shapefile_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/segmented/'
+buffered_shapefile_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/expanded/'
 input_descriptor = '_5N_lakeOccurrence_2016-2021.tif'
 output_descriptor = '_5N_lakeOccurrence_2016-2021_processed.tif'
 
@@ -45,6 +45,7 @@ def im_process(image, background_threshold, foreground_threshold):
     '''Perform image processing on numpy array input'''
     # Edge detection
     edges = sobel(image)
+    image[np.isnan(image)] = 0.0
     # Identify some background and foreground pixels from the intensity values.
     # These pixels are used as seeds for watershed.
     markers = np.zeros_like(image)
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             # Write the buffered lake shapefile
             gdf_expand.to_file(buffered_shapefile_out_directory + str(tile_id) + '_buffered.shp')
     elif mode == 'batch':
-        processed = [i.split('_')[0] for i in os.listdir(out_directory) if output_descriptor in i] # list of processed tiles
+        processed = [i.split('_')[0] for i in os.listdir(raster_out_directory) if output_descriptor in i] # list of processed tiles
         images = [i for i in os.listdir(directory) if input_descriptor in i and i.split('_')[0] not in processed] # get list of images
         print(f'Hi Eric! Gonna process {len(images)} images. There are {len(processed)} previously processed images.')
         for x, i in enumerate(images):
@@ -157,17 +158,17 @@ if __name__ == "__main__":
                 meta = dataset.meta
                 meta.update(compress='lzw')
                 # Segment image
-                image, segmented, expanded = im_process(image)
+                image, segmented, expanded = im_process(image, background_threshold, foreground_threshold)
                 # Write the modified 'image' variable to a new raster file
                 export_descriptor = str(str(i.split('_')[0] + output_descriptor))
-                with rasterio.open(str(out_directory + export_descriptor), 'w', **meta) as dst:
+                with rasterio.open(str(raster_out_directory + export_descriptor), 'w', **meta) as dst:
                     dst.write(image, 1)
             # Vectorize
             gdf_seg, gdf_expand = vectorize(segmented, expanded)
             # Write the lake shapefile
-            gdf_seg.to_file(shapefile_out_directory + str(tile_id) + '.shp')
+            gdf_seg.to_file(shapefile_out_directory + str(i.split('_')[0]) + '.shp')
             # Write the buffered lake shapefile
-            gdf_expand.to_file(buffered_shapefile_out_directory + str(tile_id) + '_buffered.shp')
+            gdf_expand.to_file(buffered_shapefile_out_directory + str(i.split('_')[0]) + '_buffered.shp')
         print('Well, that was fun!')
     else:
         print('ERROR: Set mode input variable to single or batch')
