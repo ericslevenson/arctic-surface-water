@@ -5,10 +5,11 @@ Created on Thu Jul  6 16:23:48 2023
 
 @author: ericlevenson
 
-description: Clean up Lake Occurrence Rasters with a mask based on segmentation
+description: Clean up Lake Occurrence Rasters with a mask. based on segmentation
 techniques that separate the foreground from background. Dilating the 
 segmented image produces a useful mask to filter the original image.
 """
+
 
 # Imports
 import os
@@ -26,11 +27,13 @@ from rasterio.features import shapes
 from shapely.geometry import shape
 
 
+
+
 ## ***INPUTS***
 user = 'ericlevenson' # ericlevenson = laptop; elevens2 = desktop
 mode = 'batch'  ### single or batch for one image or entire folder
-background_threshold, foreground_threshold = 0.25, 0.3 # threshold for segmentation
-directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed_combined/' # Path to lakeOccurrence Folder
+background_threshold, foreground_threshold = 0.25, 0.3 # markers for watershed segmentation
+directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/unprocessed_originals/' # Path to lakeOccurrence Folder
 tile_id =  342 # use in single mode
 raster_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/processed/' # Path to processed lake Occurrence Folder
 shapefile_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeTrack/lakeOccurrence/5N/vectors/segmented/'
@@ -150,7 +153,7 @@ if __name__ == "__main__":
         print(f'Hi Eric! Gonna process {len(images)} images. There are {len(processed)} previously processed images.')
         for x, i in enumerate(images):
             impath = str(directory+i)
-            print(f'Writing image {x+1} of {len(images)}.')
+            print(f'Writing image {i}, which is {x+1} of {len(images)}.')
             with rasterio.open(impath, dtype='float64') as dataset:
                 # Access the image data
                 image = dataset.read(1)  # Assuming you want to read the first band
