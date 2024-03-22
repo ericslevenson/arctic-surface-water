@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Wed Nov 29 14:59:40 2023
+
+@author: ericlevenson
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Thu Jul  6 16:23:48 2023
 
 @author: ericlevenson
@@ -31,24 +39,24 @@ from shapely.geometry import shape
 
 ## ***INPUTS***
 user = 'ericlevenson' # ericlevenson = laptop; elevens2 = desktop
-utmzone = '3N'
+utmzone = 'south'
 vectors = False
 mode = 'batch'  ### single or batch for one image or entire folder
-background_threshold = 10
-foreground_threshold = 75 # markers for watershed segmentation
-directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/unprocessed_combined/' # Path to lakeOccurrence Folder
+background_threshold = 10 # low end threshold
+foreground_threshold = 25 # markers for watershed segmentation
+directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/unprocessed_originals/' # Path to lakeOccurrence Folder
 tile_id =  342 # use in single mode
-raster_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/rasters_{str(background_threshold)}-{str(foreground_threshold)}_new/' # Path to processed lake Occurrence Folder
-shapefile_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/vectors/segmented_{str(background_threshold)}-{str(foreground_threshold)}_new/'
-buffered_shapefile_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/vectors/expanded/'
-input_descriptor = f'{utmzone}_lakeOccurrence_2016-2021.tif'
-output_descriptor = f'_{utmzone}_lakeOccurrence_2016-2021_processed_{str(background_threshold)}-{str(foreground_threshold)}.tif'
+raster_out_directory = f'/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/postProcessing/{utmzone}/rasters_5-10/' # Path to processed lake Occurrence Folder
+shapefile_out_directory = '/Users/{user}/Dropbox (University of Oregon)/ArcticLakeScan/timeSeries/vectors/'
+input_descriptor = f'.tif'
+output_descriptor = f'_processed_{str(background_threshold)}-{str(foreground_threshold)}.tif'
+
 
 ## ***Methods***
 def im_process(image, background_threshold, foreground_threshold):
     '''Perform image processing on numpy array input'''
     # Edge detection
-    edges = sobel(image)
+    #edges = sobel(image)
     image[np.isnan(image)] = 0.0
     # Identify some background and foreground pixels from the intensity values.
     # These pixels are used as seeds for watershed.
@@ -57,7 +65,7 @@ def im_process(image, background_threshold, foreground_threshold):
     markers[image < background_threshold] = background
     markers[image > foreground_threshold] = foreground
     # Watershed Segmentation
-    ws = watershed(edges, markers)
+    ws = watershed(image, markers)
     # Label Segments
     seg1 = label(ws == foreground)
     # Convert seg1 to a boolean mask
@@ -147,9 +155,9 @@ if __name__ == "__main__":
             # Write the buffered lake shapefile
             #gdf_expand.to_file(buffered_shapefile_out_directory + str(tile_id) + '_buffered.shp')
     elif mode == 'batch':
-        processed = [i.split('_')[0] for i in os.listdir(raster_out_directory) if output_descriptor in i] # list of processed tiles
-        images = [i for i in os.listdir(directory) if input_descriptor in i and i.split('_')[0] not in processed] # get list of images
-        print(f'Hi Eric! Gonna process {len(images)} images. There are {len(processed)} previously processed images.')
+        processed = [str(i.split('_')[0] + '_' + i.split('_')[1].split('.')[0]) for i in os.listdir(raster_out_directory) if output_descriptor in i] # list of processed tiles
+        images = [i for i in os.listdir(directory) if input_descriptor in i and str(i.split('_')[0] + '_' + i.split('_')[2].split('.')[0]) not in processed] # get list of images
+        print(f'Hi! Gonna process {len(images)} images. There are {len(processed)} previously processed images.')
         for x, i in enumerate(images):
             impath = str(directory+i)
             print(f'Writing image {i}, which is {x+1} of {len(images)}.')
@@ -162,14 +170,15 @@ if __name__ == "__main__":
                 # Segment image
                 image, segmented = im_process(image, background_threshold/100, foreground_threshold/100)
                 # Write the modified 'image' variable to a new raster file
-                export_descriptor = str(str(i.split('_')[0] + output_descriptor))
+                export_descriptor = str(str(i.split('_')[0] + '_' + str(i.split('_')[2].split('.')[0]) + output_descriptor))
+                
                 with rasterio.open(str(raster_out_directory + export_descriptor), 'w', **meta) as dst:
                     dst.write(image, 1)
             # Vectorize
             if vectors == True:
                 gdf_seg = vectorize(segmented)
                 # Write the lake shapefile
-                gdf_seg.to_file(shapefile_out_directory + f'{utmzone}_' + str(i.split('_')[0]) + '.shp')
+                gdf_seg.to_file(shapefile_out_directory + str(i.split('_')[0]) + '_' + str(i.split('_')[2].split('.')[0])+'_'+str(foreground_threshold) + '.shp')
             else:
                 continue
         print('Well, that was fun!')
